@@ -20,25 +20,24 @@ handleParsingResult resultM = do
   case result of
     Left error -> putStrLn "OOPS!"
     Right csv -> transformCSV csv
-    -- Right csv -> putStrLn "Yahoo!"
 
 transformCSV :: CSV -> IO ()
 transformCSV csv = do
   mapM_ (putStrLn . show) (csvToNMEARecords csv)
 
-data NMEARecord = GPGGA [String]
-                | GPRMC [String]
+data NMEARecord = GPGGA [Field]
+                | GPRMC [Field]
                 deriving Show
 
-csvToNMEARecords :: CSV -> [NMEARecord]
+csvToNMEARecords :: CSV -> [Maybe NMEARecord]
 csvToNMEARecords csv = map recordToNMEARecord csv
 
-recordToNMEARecord :: Record -> NMEARecord
+recordToNMEARecord :: Record -> Maybe NMEARecord
 recordToNMEARecord (recordType : fields) =
     case recordType of
-        "$GPGGA" -> GPGGA fields
-        "$GPRMC" -> GPRMC fields
-        otherwise -> GPGGA [] -- FIXME
+        "$GPGGA" -> Just (GPGGA fields)
+        "$GPRMC" -> Just (GPRMC fields)
+        otherwise -> Nothing
 
 type Latitude = Float
 type Longitude = Float
