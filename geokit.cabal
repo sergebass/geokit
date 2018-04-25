@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: db6f26804b8a8b0eb3f338d6d14006bc4c30cfc0c7bb9817b555092e880eaeec
+-- hash: 8a5bb0a38c532b2436d3c0d68717e57a5fd40421d347a24132e3dc0450be9cb2
 
 name:           geokit
 version:        0.1.0.0
@@ -30,20 +30,26 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , csv
+    , parsec
+    , text
   exposed-modules:
       Lib
   other-modules:
       Paths_geokit
   default-language: Haskell2010
 
-executable geokit-exe
+executable geokit
   main-is: Main.hs
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , csv
     , geokit
+    , parsec
+    , text
   other-modules:
       Paths_geokit
   default-language: Haskell2010
@@ -56,7 +62,10 @@ test-suite geokit-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , csv
     , geokit
+    , parsec
+    , text
   other-modules:
       Paths_geokit
   default-language: Haskell2010
