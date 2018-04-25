@@ -1,7 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import Data.Monoid
-import Lib
+import NMEA0183
 import System.Environment
 
 main :: IO ()
