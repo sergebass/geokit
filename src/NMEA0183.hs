@@ -91,19 +91,18 @@ decodeGGA sentence@(timeString
                   : longitudeString
                   : eastOrWestString
                   : _)
-  = Right (GGA { ggaSentence = restoreSentenceText sentence
-               , ggaTimeUTC = pack timeString
-               , ggaLatitude = let latitude = read latitudeString
-                               in if northOrSouthString == "N"  -- Northern hemisphere
-                                   then latitude
-                                   else (- latitude)  -- "Down Under"
-               , ggaLongitude = let longitude = read longitudeString
-                                in if eastOrWestString == "E"  -- Eastern hemisphere
-                                    then longitude
-                                    else (- longitude)  -- Western hemisphere
-               }
-          )
-decodeGGA sentence = Left ("Cannot parse GGA sentence: " <> restoreSentenceText sentence)
+  = Right $ GGA { ggaSentence = restoreSentenceText sentence
+                , ggaTimeUTC = pack timeString
+                , ggaLatitude = let latitude = read latitudeString
+                                in if northOrSouthString == "N"  -- Northern hemisphere
+                                    then latitude
+                                    else (- latitude)  -- "Down Under"
+                , ggaLongitude = let longitude = read longitudeString
+                                 in if eastOrWestString == "E"  -- Eastern hemisphere
+                                     then longitude
+                                     else (- longitude)  -- Western hemisphere
+                }
+decodeGGA sentence = Left $ "Cannot parse GGA sentence: " <> restoreSentenceText sentence
 
 -- GSA: GPS DOP and active satellites
 --
@@ -121,7 +120,7 @@ decodeGGA sentence = Left ("Cannot parse GGA sentence: " <> restoreSentenceText 
 -- 17) VDOP in meters
 -- 18) Checksum
 decodeGSA :: [Field] -> Either ParsingError NMEARecord
-decodeGSA fields = Right (GSA fields)  -- TODO
+decodeGSA fields = Right $ GSA fields  -- TODO
 
 -- GSV: Satellites in view
 --
@@ -138,7 +137,7 @@ decodeGSA fields = Right (GSA fields)  -- TODO
 -- more satellite infos like 4)-7)
 -- n) Checksum
 decodeGSV :: [Field] -> Either ParsingError NMEARecord
-decodeGSV fields = Right (GSV fields)  -- TODO
+decodeGSV fields = Right $ GSV fields  -- TODO
 
 -- RMC: Recommended Minimum Navigation Information
 --
@@ -158,7 +157,7 @@ decodeGSV fields = Right (GSV fields)  -- TODO
 -- 11) E or W
 -- 12) Checksum
 decodeRMC :: [Field] -> Either ParsingError NMEARecord
-decodeRMC fields = Right (RMC fields)  -- TODO
+decodeRMC fields = Right $ RMC fields  -- TODO
 
 -- VTG: Track Made Good and Ground Speed
 --        1   2 3   4 5 6 7   8 9
@@ -174,16 +173,4 @@ decodeRMC fields = Right (RMC fields)  -- TODO
 -- 8) K = Kilometres Per Hour
 -- 9) Checksum
 decodeVTG :: [Field] -> Either ParsingError NMEARecord
-decodeVTG fields = Right (VTG fields)  -- TODO
-
-type Latitude = Float
-type Longitude = Float
-type Altitude = Float
-
-data Point = Point
-    { location :: Maybe (Latitude, Longitude)
-    , altitude :: Maybe Altitude
-    } deriving Show
-
-csvToPoints :: CSV -> [Point]
-csvToPoints csv = undefined
+decodeVTG fields = Right $ VTG fields  -- TODO
