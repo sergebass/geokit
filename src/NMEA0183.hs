@@ -4,7 +4,9 @@ module NMEA0183
     ( processNMEAFile
     ) where
 
+import Data.List
 import Data.Monoid
+import Data.Text (Text, pack)
 import qualified Data.Text as T
 import Text.CSV
 import Text.Parsec.Error
@@ -26,12 +28,19 @@ transformCSV csv = do
   mapM_ (putStrLn . show) (csvToNMEARecords csv)
 
 -- FIXME use proper records here
-data NMEARecord = GGA [Field]  -- Global Positioning System Fix Data
-                | GSA [Field]  -- GPS DOP and active satellites
-                | GSV [Field]  -- Satellites in view
-                | RMC [Field]  -- Recommended Minimum Navigation Information
-                | VTG [Field]  -- Track Made Good and Ground Speed
-                deriving Show
+data NMEARecord  -- FIXME call it Sentence
+  = GGA  -- GPS DOP and active satellites
+      { ggaSentence :: Text
+      , ggaTimeUTC :: Text
+      , ggaLatitude :: Double
+      , ggaLongitude :: Double
+      -- FIXME add remaining fields
+      }
+  | GSA [Field]  -- Global Positioning System Fix Data
+  | GSV [Field]  -- Satellites in view
+  | RMC [Field]  -- Recommended Minimum Navigation Information
+  | VTG [Field]  -- Track Made Good and Ground Speed
+  deriving Show
 
 csvToNMEARecords :: CSV -> [Maybe NMEARecord]
 csvToNMEARecords csv = map recordToNMEARecord csv
@@ -71,7 +80,25 @@ recordToNMEARecord (recordType : fields) =
 -- 14) Differential reference station ID, 0000-1023
 -- 15) Checksum
 decodeGGA :: [Field] -> Maybe NMEARecord
-decodeGGA fields = Just (GGA fields)  -- TODO
+decodeGGA sentence@(timeString
+                  : latitudeString
+                  : northOrSouthString
+                  : longitudeString
+                  : eastOrWestString
+                  : _)
+  = Just (GGA { ggaSentence = pack $ intercalate "," sentence
+              , ggaTimeUTC = pack timeString
+              , ggaLatitude = let latitude = read latitudeString
+                              in if northOrSouthString == "N"  -- Northern hemisphere
+                                  then latitude
+                                  else (- latitude)  -- "Down Under"
+              , ggaLongitude = let longitude = read longitudeString
+                               in if eastOrWestString == "E"  -- Eastern hemisphere
+                                   then longitude
+                                   else (- longitude)  -- Western hemisphere
+              }
+         )
+decodeGGA _ = Nothing
 
 -- GSA: GPS DOP and active satellites
 --
