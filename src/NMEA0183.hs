@@ -29,14 +29,14 @@ transformCSV csv = do
 
 -- FIXME use proper records here
 data NMEARecord  -- FIXME call it Sentence
-  = GGA  -- GPS DOP and active satellites
+  = GGA  -- Global Positioning System Fix Data
       { ggaSentence :: Text
       , ggaTimeUTC :: Text
       , ggaLatitude :: Double
       , ggaLongitude :: Double
       -- FIXME add remaining fields
       }
-  | GSA [Field]  -- Global Positioning System Fix Data
+  | GSA [Field]  -- GPS DOP and active satellites
   | GSV [Field]  -- Satellites in view
   | RMC [Field]  -- Recommended Minimum Navigation Information
   | VTG [Field]  -- Track Made Good and Ground Speed
