@@ -24,8 +24,7 @@ handleParsingResult resultM = do
     Right csv -> transformCSV csv
 
 transformCSV :: CSV -> IO ()
-transformCSV csv = do
-  mapM_ (putStrLn . show) (csvToNMEARecords csv)
+transformCSV csv = mapM_ print (csvToNMEARecords csv)
 
 data NMEARecord  -- FIXME call it Sentence
   = GGA  -- Global Positioning System Fix Data
@@ -41,20 +40,23 @@ data NMEARecord  -- FIXME call it Sentence
   | VTG [Field]  -- Track Made Good and Ground Speed
   deriving Show
 
-type ParsingError = Text
+type NMEAParsingError = Text
 
-csvToNMEARecords :: CSV -> [Either ParsingError NMEARecord]
-csvToNMEARecords csv = map recordToNMEARecord csv
+csvToNMEARecords :: CSV -> [Either NMEAParsingError NMEARecord]
+csvToNMEARecords csv
+  = map recordToNMEARecord $ filter (\record -> not $ null record || record == [""]) csv
 
-recordToNMEARecord :: Record -> Either ParsingError NMEARecord
-recordToNMEARecord (recordType : fields) =
+recordToNMEARecord :: Record -> Either NMEAParsingError NMEARecord
+recordToNMEARecord [] = Left "Empty record"
+recordToNMEARecord [""] = Left "Empty record"
+recordToNMEARecord sentence@(recordType : fields) =
     case recordType of
         "$GPGGA" -> decodeGGA fields
         "$GPGSA" -> decodeGSA fields
         "$GPGSV" -> decodeGSV fields
         "$GPRMC" -> decodeRMC fields
         "$GPVTG" -> decodeVTG fields
-        otherwise -> Left ("Unknown NMEA sentence type: " <> pack recordType)
+        _        -> Left $ "Unknown NMEA sentence type in {" <> pack (show sentence) <> "}"
 
 restoreSentenceText :: [Field] -> Text
 restoreSentenceText sentence = pack $ intercalate "," sentence
@@ -85,24 +87,24 @@ $--GGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh
 14) Differential reference station ID, 0000-1023
 15) Checksum
 -----------------------------------------------------------------------------}
-decodeGGA :: [Field] -> Either ParsingError NMEARecord
+decodeGGA :: [Field] -> Either NMEAParsingError NMEARecord
 decodeGGA sentence@(timeString
                   : latitudeString
                   : northOrSouthString
                   : longitudeString
                   : eastOrWestString
                   : _)
-  = Right $ GGA { ggaSentence = restoreSentenceText sentence
-                , ggaTimeUTC = pack timeString
-                , ggaLatitude = let latitude = read latitudeString
-                                in if northOrSouthString == "N"  -- Northern hemisphere
-                                    then latitude
-                                    else (- latitude)  -- "Down Under"
-                , ggaLongitude = let longitude = read longitudeString
-                                 in if eastOrWestString == "E"  -- Eastern hemisphere
-                                     then longitude
-                                     else (- longitude)  -- Western hemisphere
-                }
+  = Right GGA { ggaSentence = restoreSentenceText sentence
+              , ggaTimeUTC = pack timeString
+              , ggaLatitude = let latitude = read latitudeString
+                              in if northOrSouthString == "N"  -- Northern hemisphere
+                                  then latitude
+                                  else (- latitude)  -- "Down Under"
+              , ggaLongitude = let longitude = read longitudeString
+                               in if eastOrWestString == "E"  -- Eastern hemisphere
+                                   then longitude
+                                   else (- longitude)  -- Western hemisphere
+              }
 decodeGGA sentence = Left $ "Cannot parse GGA sentence: " <> restoreSentenceText sentence
 
 {----------------------------------------------------------------------------
@@ -122,7 +124,7 @@ $--GSA,a,a,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x.x,x.x,x.x*hh
 17) VDOP in meters
 18) Checksum
 -----------------------------------------------------------------------------}
-decodeGSA :: [Field] -> Either ParsingError NMEARecord
+decodeGSA :: [Field] -> Either NMEAParsingError NMEARecord
 decodeGSA fields = Right $ GSA fields  -- TODO
 
 {----------------------------------------------------------------------------
@@ -141,7 +143,7 @@ $--GSV,x,x,x,x,x,x,x,...*hh
 more satellite infos like 4)-7)
 n) Checksum
 -----------------------------------------------------------------------------}
-decodeGSV :: [Field] -> Either ParsingError NMEARecord
+decodeGSV :: [Field] -> Either NMEAParsingError NMEARecord
 decodeGSV fields = Right $ GSV fields  -- TODO
 
 {----------------------------------------------------------------------------
@@ -163,7 +165,7 @@ $--RMC,hhmmss.ss,A,llll.ll,a,yyyyy.yy,a,x.x,x.x,xxxx,x.x,a*hh
 11) E or W
 12) Checksum
 -----------------------------------------------------------------------------}
-decodeRMC :: [Field] -> Either ParsingError NMEARecord
+decodeRMC :: [Field] -> Either NMEAParsingError NMEARecord
 decodeRMC fields = Right $ RMC fields  -- TODO
 
 {----------------------------------------------------------------------------
@@ -181,5 +183,5 @@ $--VTG,x.x,T,x.x,M,x.x,N,x.x,K*hh
 8) K = Kilometres Per Hour
 9) Checksum
 -----------------------------------------------------------------------------}
-decodeVTG :: [Field] -> Either ParsingError NMEARecord
+decodeVTG :: [Field] -> Either NMEAParsingError NMEARecord
 decodeVTG fields = Right $ VTG fields  -- TODO
