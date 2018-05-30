@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 41c20a8e07532cc70e6efdba1b06f00c823a9b6c7a85194876b039b7c49034ee
+-- hash: 49acd6c6ecad75cfbdd838feecd1bd289be25ad2013af769a56fa568ad49e8ce
 
 name:           geokit
 version:        0.1.0.0
@@ -66,6 +66,7 @@ test-suite geokit-test
     , geokit
     , hspec
     , parsec
+    , split
     , text
   other-modules:
       Paths_geokit

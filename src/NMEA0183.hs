@@ -1,8 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module NMEA0183
-    ( processNMEAFile
-    ) where
+module NMEA0183 where
 
 import Data.List
 import Data.Monoid
@@ -38,7 +36,7 @@ data NMEARecord  -- FIXME call it Sentence
   | GSV [Field]  -- Satellites in view
   | RMC [Field]  -- Recommended Minimum Navigation Information
   | VTG [Field]  -- Track Made Good and Ground Speed
-  deriving Show
+  deriving (Show, Eq)
 
 type NMEAParsingError = Text
 
@@ -51,11 +49,11 @@ recordToNMEARecord [] = Left "Empty record"
 recordToNMEARecord [""] = Left "Empty record"
 recordToNMEARecord sentence@(recordType : fields) =
     case recordType of
-        "$GPGGA" -> decodeGGA fields
-        "$GPGSA" -> decodeGSA fields
-        "$GPGSV" -> decodeGSV fields
-        "$GPRMC" -> decodeRMC fields
-        "$GPVTG" -> decodeVTG fields
+        "$GPGGA" -> decodeGGA sentence
+        "$GPGSA" -> decodeGSA sentence
+        "$GPGSV" -> decodeGSV sentence
+        "$GPRMC" -> decodeRMC sentence
+        "$GPVTG" -> decodeVTG sentence
         _        -> Left $ "Unknown NMEA sentence type in {" <> pack (show sentence) <> "}"
 
 restoreSentenceText :: [Field] -> Text
@@ -88,7 +86,8 @@ $--GGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh
 15) Checksum
 -----------------------------------------------------------------------------}
 decodeGGA :: [Field] -> Either NMEAParsingError NMEARecord
-decodeGGA sentence@(timeString
+decodeGGA sentence@(prefix
+                  : timeString
                   : latitudeString
                   : northOrSouthString
                   : longitudeString
@@ -125,7 +124,7 @@ $--GSA,a,a,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x.x,x.x,x.x*hh
 18) Checksum
 -----------------------------------------------------------------------------}
 decodeGSA :: [Field] -> Either NMEAParsingError NMEARecord
-decodeGSA fields = Right $ GSA fields  -- TODO
+decodeGSA sentence = Right $ GSA sentence  -- TODO
 
 {----------------------------------------------------------------------------
 GSV: Satellites in view
@@ -144,7 +143,7 @@ more satellite infos like 4)-7)
 n) Checksum
 -----------------------------------------------------------------------------}
 decodeGSV :: [Field] -> Either NMEAParsingError NMEARecord
-decodeGSV fields = Right $ GSV fields  -- TODO
+decodeGSV sentence = Right $ GSV sentence  -- TODO
 
 {----------------------------------------------------------------------------
 RMC: Recommended Minimum Navigation Information
@@ -166,7 +165,7 @@ $--RMC,hhmmss.ss,A,llll.ll,a,yyyyy.yy,a,x.x,x.x,xxxx,x.x,a*hh
 12) Checksum
 -----------------------------------------------------------------------------}
 decodeRMC :: [Field] -> Either NMEAParsingError NMEARecord
-decodeRMC fields = Right $ RMC fields  -- TODO
+decodeRMC sentence = Right $ RMC sentence  -- TODO
 
 {----------------------------------------------------------------------------
 VTG: Track Made Good and Ground Speed
@@ -184,4 +183,4 @@ $--VTG,x.x,T,x.x,M,x.x,N,x.x,K*hh
 9) Checksum
 -----------------------------------------------------------------------------}
 decodeVTG :: [Field] -> Either NMEAParsingError NMEARecord
-decodeVTG fields = Right $ VTG fields  -- TODO
+decodeVTG sentence = Right $ VTG sentence  -- TODO
